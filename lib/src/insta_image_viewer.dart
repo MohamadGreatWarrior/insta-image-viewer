@@ -19,6 +19,7 @@ class InstaImageViewer extends StatelessWidget {
     this.backgroundIsTransparent = true,
     this.disposeLevel,
     this.disableSwipeToDismiss = false,
+    this.tag,
   }) : super(key: key);
 
   /// Image widget
@@ -46,71 +47,75 @@ class InstaImageViewer extends StatelessWidget {
   /// - it gives more predictable behaviour
   final bool disableSwipeToDismiss;
 
+  final UniqueKey? tag;
+
+  void onTap(BuildContext context, UniqueKey tag) {
+    if (imageUrl != null) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          opaque: false,
+          barrierColor: backgroundIsTransparent
+              ? Colors.white.withOpacity(0)
+              : backgroundColor,
+          pageBuilder: (BuildContext context, _, __) {
+            return FullScreenViewer(
+              tag: tag,
+              child: Image.network(
+                imageUrl!,
+                headers: headers,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) {
+                    return child;
+                  }
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+              ),
+              backgroundColor: backgroundColor,
+              backgroundIsTransparent: backgroundIsTransparent,
+              disposeLevel: disposeLevel,
+              disableSwipeToDismiss: disableSwipeToDismiss,
+            );
+          },
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          opaque: false,
+          barrierColor: backgroundIsTransparent
+              ? Colors.white.withOpacity(0)
+              : backgroundColor,
+          pageBuilder: (BuildContext context, _, __) {
+            return FullScreenViewer(
+              tag: tag,
+              child: child,
+              backgroundColor: backgroundColor,
+              backgroundIsTransparent: backgroundIsTransparent,
+              disposeLevel: disposeLevel,
+              disableSwipeToDismiss: disableSwipeToDismiss,
+            );
+          },
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final UniqueKey tag = UniqueKey();
+    final UniqueKey tag = this.tag ?? UniqueKey();
     return Hero(
       tag: tag,
       child: GestureDetector(
-        onTap: () {
-          if (imageUrl != null) {
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                opaque: false,
-                barrierColor: backgroundIsTransparent
-                    ? Colors.white.withOpacity(0)
-                    : backgroundColor,
-                pageBuilder: (BuildContext context, _, __) {
-                  return FullScreenViewer(
-                    tag: tag,
-                    child: Image.network(
-                      imageUrl!,
-                      headers: headers,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) {
-                          return child;
-                        }
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-                    backgroundColor: backgroundColor,
-                    backgroundIsTransparent: backgroundIsTransparent,
-                    disposeLevel: disposeLevel,
-                    disableSwipeToDismiss: disableSwipeToDismiss,
-                  );
-                },
-              ),
-            );
-          } else {
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                opaque: false,
-                barrierColor: backgroundIsTransparent
-                    ? Colors.white.withOpacity(0)
-                    : backgroundColor,
-                pageBuilder: (BuildContext context, _, __) {
-                  return FullScreenViewer(
-                    tag: tag,
-                    child: child,
-                    backgroundColor: backgroundColor,
-                    backgroundIsTransparent: backgroundIsTransparent,
-                    disposeLevel: disposeLevel,
-                    disableSwipeToDismiss: disableSwipeToDismiss,
-                  );
-                },
-              ),
-            );
-          }
-        },
+        onTap: () => onTap(context, tag),
         child: child,
       ),
     );
